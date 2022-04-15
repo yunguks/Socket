@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from uvctypes import *
-import time
-import cv2
-import numpy as np
 import datetime
 import pandas as pd
 import sys
@@ -15,6 +12,8 @@ try:
 except ImportError:
   from Queue import Queue
 import platform
+from find_homo import *
+from copy import deepcopy
 
 BUF_SIZE = 2
 q = Queue(BUF_SIZE)
@@ -41,7 +40,7 @@ def raw_to_8bit(data):
   return cv2.cvtColor(np.uint8(data), cv2.COLOR_GRAY2RGB)
 
 def ktoc(val):
-  return (val - 27315) / 100.0
+  return (val-27315) /100.0
 
 def main():
   if len(sys.argv) < 2 or len(sys.argv) > 3:
@@ -54,7 +53,7 @@ def main():
     print(f"{dirname} is exist.")
   
   
-  cap = cv2.VideoCapture(0)
+  cap = cv2.VideoCapture(2)
   if not cap.isOpened():
     print("Camera not found!")
     exit(1)
@@ -105,26 +104,46 @@ def main():
       if cap is not None:
         cap_cleaner = CameraBufferCleanerThread(cap)
         time.sleep(1)
-        cv2.namedWindow("Temperature",cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("Temperature", width=480, height=360)
+        cv2.namedWindow("Temperature",cv2.WINDOW_NORMAL | cv2.WINDOW_AUTOSIZE)
+        #cv2.resizeWindow("Temperature", width=480, height=360)
+
+        find_img = cap_cleaner.last_frame
+        find_img = cv2.flip(find_img,-1)
+        _, coordinates = initcapture(find_img,1)
+        
+        y1,y2,x1,x2 = coordinates[0]
+        find_img = find_img[y1:y2,x1:x2].copy()
       try:
         while True:
+          start = time.time()
+
           data = q.get(True, 500)
+
           if cap is not None:
             img2 = cap_cleaner.last_frame
             img2 = cv2.flip(img2,-1)
             ret = True
           if data is None:
             break
-          
-          data_temp = data.copy()
-          img = raw_to_8bit(data)
-          img = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
-          img = cv2.flip(img,-1)
-          cv2.imshow("Lepton Radiometry", img)
 
           if ret:
-            cv2.imshow("Temperature", img2)
+            homo_img, rectangle = homography(find_img,img2)
+            #print(f'rectangle : {rectangle}')
+            cv2.imshow("Temperature", homo_img)
+
+
+          data_temp = data.copy()
+          data_crop = deepcopy(data)
+          data_crop = masktoIR(data_crop,rectangle)
+          
+          img = raw_to_8bit(data)
+          img = cv2.flip(img,-1)
+          img = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
+          img_mask = masktoIR(img,rectangle)
+          #cv2.namedWindow("Lepton Radiometry",cv2.WINDOW_NORMAL)
+          #cv2.resizeWindow("Lepton Radiometry", width=640, height=480)
+          cv2.imshow("Lepton Radiometry", img_mask)
+
           k = cv2.waitKey(50) # 10fps
           if k == 27:
             break
@@ -133,17 +152,29 @@ def main():
           elif k == 13: # enter저장
             now = datetime.datetime.now()
             fname = dirname + now.strftime("/%m%d_%H%M%S")
+          
             cv2.imwrite(f"{fname}.jpg",img)
             print(f"File {fname}.jpg is Saved")
+            
             data_temp = ktoc(data_temp)
             df = pd.DataFrame(data_temp)
             df = df.loc[::-1].loc[:,::-1]
             df.to_csv(f"{fname}.csv",index=False, header=None)
+            
+            data_crop = ktoc(data_crop)
+            print(data_crop)
+            df1 = pd.DataFrame(data_crop)
+            df1 = df1.loc[::-1].loc[:,::-1]
+            df1.to_csv(f"{fname}_crop.csv",index=False, header=None)
+            
             if ret:
-              cv2.imwrite(f"{fname}_.jpg",img2)
+              cv2.imwrite(f"{fname}_.jpg",homo_img)
+            
             Light = readLight()
             print(f'Light : {Light}')
         cv2.destroyAllWindows()
+        end= time.time()
+        #print(f'1 cycle time : {round(end-start,2)}s')
       finally:
         libuvc.uvc_stop_streaming(devh)
       print("done")
