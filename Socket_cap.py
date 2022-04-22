@@ -13,7 +13,6 @@ except ImportError:
   from Queue import Queue
 import platform
 from find_homo import *
-from copy import deepcopy
 
 BUF_SIZE = 2
 q = Queue(BUF_SIZE)
@@ -40,7 +39,9 @@ def raw_to_8bit(data):
   return cv2.cvtColor(np.uint8(data), cv2.COLOR_GRAY2RGB)
 
 def ktoc(val):
-  return (val-27315) /100.0
+  val = np.where(val>0, (val-27315)/100.0, 0)
+
+  return val
 
 def main():
   if len(sys.argv) < 2 or len(sys.argv) > 3:
@@ -113,6 +114,9 @@ def main():
         
         y1,y2,x1,x2 = coordinates[0]
         find_img = find_img[y1:y2,x1:x2].copy()
+        find_img_name = dirname + '/' + sys.argv[1]
+        cv2.imwrite(f"{find_img_name}_base.jpg",find_img)
+        print(f"File {find_img_name}_base.jpg is Saved")
       try:
         while True:
           start = time.time()
@@ -131,17 +135,14 @@ def main():
             #print(f'rectangle : {rectangle}')
             cv2.imshow("Temperature", homo_img)
 
-
+          data = cv2.flip(data,-1)
           data_temp = data.copy()
-          data_crop = deepcopy(data)
+          data_crop = data.copy()
           data_crop = masktoIR(data_crop,rectangle)
           
           img = raw_to_8bit(data)
-          img = cv2.flip(img,-1)
           img = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
           img_mask = masktoIR(img,rectangle)
-          #cv2.namedWindow("Lepton Radiometry",cv2.WINDOW_NORMAL)
-          #cv2.resizeWindow("Lepton Radiometry", width=640, height=480)
           cv2.imshow("Lepton Radiometry", img_mask)
 
           k = cv2.waitKey(50) # 10fps
@@ -158,20 +159,19 @@ def main():
             
             data_temp = ktoc(data_temp)
             df = pd.DataFrame(data_temp)
-            df = df.loc[::-1].loc[:,::-1]
+            #df = df.loc[::-1].loc[:,::-1]
             df.to_csv(f"{fname}.csv",index=False, header=None)
             
             data_crop = ktoc(data_crop)
-            print(data_crop)
             df1 = pd.DataFrame(data_crop)
-            df1 = df1.loc[::-1].loc[:,::-1]
+            #df1 = df1.loc[::-1].loc[:,::-1]
             df1.to_csv(f"{fname}_crop.csv",index=False, header=None)
             
             if ret:
               cv2.imwrite(f"{fname}_.jpg",homo_img)
             
             Light = readLight()
-            print(f'Light : {Light}')
+            print(f'Light : {round(Light,2)}')
         cv2.destroyAllWindows()
         end= time.time()
         #print(f'1 cycle time : {round(end-start,2)}s')
