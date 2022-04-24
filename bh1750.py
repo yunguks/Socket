@@ -54,7 +54,7 @@ def readLight(addr=0x23):
    # Simple function to convert 2 bytes of data
   # into a decimal number. Optional parameter 'decimals'
   # will round to specified number of decimal places.
-  result=(data[1] + (256 * data[0])) / 1.2
+  result=round((data[1] + (256 * data[0])) / 1.2,2)
   return result
 
 def main():
