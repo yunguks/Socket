@@ -172,9 +172,10 @@ def main():
             
             Light = readLight()
             print(f'Light : {round(Light,2)}')
+          
+          end= time.time()
+          print(f'1 cycle time : {round(end-start,2)}s')
         cv2.destroyAllWindows()
-        end= time.time()
-        #print(f'1 cycle time : {round(end-start,2)}s')
       finally:
         libuvc.uvc_stop_streaming(devh)
       print("done")

@@ -117,7 +117,9 @@ def main():
 
       ir_list = []
       ir_size = 3
-      
+      mid = int(ir_size/2)
+      check = 0
+      delay = 2
       try:
         while True:
           start = time.time()
@@ -130,7 +132,6 @@ def main():
             ret = True
           if data is None:
             break
-          mid = int(ir_size/2)
           data = cv2.flip(data,-1)
           data = ktoc(data)
           
@@ -150,8 +151,11 @@ def main():
             sub3 = cv2.bitwise_and(sub1,sub2)
             count = np.count_nonzero(sub3)
             if count > 10:
+              check = check +1
               print(f'count = {count}')
               print(f'max temparature : {round(np.max(data),2)}')
+            else:
+              check = 0
           # img = raw_to_8bit(data)
           # img = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
           # cv2.imshow("Lepton Radiometry", img)
@@ -187,8 +191,8 @@ def main():
             print(f'Light : {round(Light,2)}')
         
           end= time.time()
-          delay = 5-(end-start)
-          time.sleep(delay)
+          d = delay-(end-start)
+          time.sleep(d)
           print(f'1 cycle time : {round(end-start,2)}s')
         cv2.destroyAllWindows()
       finally:
