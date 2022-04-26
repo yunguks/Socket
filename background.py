@@ -143,10 +143,10 @@ def main():
 
             sub1 = cv2.subtract(ir_list[0],ir_list[mid])
             #sub1 = np.where(sub1>1,sub1,0)
-            _,sub1 = cv2.threshold(sub1,5,255,cv2.THRESH_BINARY)
+            _,sub1 = cv2.threshold(sub1,3,255,cv2.THRESH_BINARY)
             sub2 = cv2.subtract(ir_list[mid],ir_list[-1])
             #sub2 = np.where(sub2>5,sub2,0)
-            _,sub2 = cv2.threshold(sub2,5,255,cv2.THRESH_BINARY)
+            _,sub2 = cv2.threshold(sub2,3,255,cv2.THRESH_BINARY)
 
             sub3 = cv2.bitwise_and(sub1,sub2)
             count = np.count_nonzero(sub3)
@@ -193,6 +193,7 @@ def main():
           end= time.time()
           d = delay-(end-start)
           time.sleep(d)
+          end= time.time()
           print(f'1 cycle time : {round(end-start,2)}s')
         cv2.destroyAllWindows()
       finally:

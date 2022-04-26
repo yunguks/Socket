@@ -35,7 +35,7 @@ while True:
     k = cv2.waitKey(27) # cam 27
     #print(k)
 
-    if k == 109: # k = m
+    if k == ord('s'): # k = m
         f = f'sample{i}.jpg'
         cv2.imwrite(f,img)
         print(f'sample{i}.jpg saved')
@@ -47,7 +47,7 @@ while True:
         break
     end = time.time()
     delay = 5-(start-end)
-    time.sleep(delay)
+    #time.sleep(delay)
 cv2.destroyAllWindows()
 cap_cleaner.raise_exception()
 cap_cleaner.join()
