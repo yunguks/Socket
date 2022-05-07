@@ -13,7 +13,7 @@ cap = cv2.VideoCapture(2)
 filter_size = 5
 img_list = []
 delay = 0.05
-img_size = int(10/delay)
+img_size = int(3/delay)
 mid = int(img_size/2)
 
 if not cap.isOpened():
@@ -43,7 +43,7 @@ try:
        
         img = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
         img = cv2.flip(img,-1)
-        #img = cv2.blur(img,(filter_size,filter_size))
+        img = cv2.blur(img,(filter_size,filter_size))
         
         if len(img_list) < img_size:
             img_list.insert(0,img)
@@ -51,26 +51,26 @@ try:
             img_list.pop()
             img_list.insert(0,img)
 
-            sub1 = cv2.absdiff(img_list[0],img_list[mid])
+            sub1 = cv2.absdiff(img_list[0],img_list[-1])
             #sub1 = np.where(sub1>1,sub1,0)
-            _,sub1 = cv2.threshold(sub1,30,255,cv2.THRESH_BINARY)
-            sub2 = cv2.absdiff(img_list[mid],img_list[-1])
+            #_,sub1 = cv2.threshold(sub1,30,255,cv2.THRESH_BINARY)
+            #sub2 = cv2.absdiff(img_list[mid],img_list[-1])
             #sub2 = np.where(sub2>5,sub2,0)
-            _,sub2 = cv2.threshold(sub2,30,255,cv2.THRESH_BINARY)
+            #_,sub2 = cv2.threshold(sub2,30,255,cv2.THRESH_BINARY)
 
-            sub3 = cv2.bitwise_and(sub1,sub2)
+            #sub3 = cv2.bitwise_and(sub1,sub2)
             
-            back = cv2.absdiff(sub3,img_list[mid])
+            #back = cv2.absdiff(sub3,img_list[mid])
             
             
-            mov = cv2.bitwise_or(back,img_list[mid])
-            result = cv2.absdiff(mov,img_list[mid])
+            #mov = cv2.bitwise_or(back,img_list[mid])
+            #result = cv2.absdiff(mov,img_list[mid])
             #_,result = cv2.threshold(result,100,255,cv2.THRESH_BINARY)
             
-            cv2.imshow("diff", result)
+            cv2.imshow("diff", sub1)
         # mask = subtractor.apply(img)    
         
-        k = cv2.waitKey(10) # cam 27
+        k = cv2.waitKey(27) # cam 27
         #print(k)
         end= time.time()
         if k == 27: # 
@@ -78,7 +78,7 @@ try:
         #if (end-start) < delay:
         #    time.sleep(delay-(end-start))
         #end = time.time()
-        print(f'1 cycle time {round(end-start,5)}')
+        print(f'1 cycle time {round(end-start,2)}')
 finally:
     cap_cleaner.raise_exception()
     cap_cleaner.join()

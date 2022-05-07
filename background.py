@@ -115,11 +115,11 @@ def main():
       #   find_img_name = dirname + '/' + sys.argv[1]
       #   cv2.imwrite(f"{find_img_name}_base.jpg",find_img)
 
-      ir_list = []
-      ir_size = 3
-      mid = int(ir_size/2)
       check = 0
-      delay = 2
+      delay = 0.5
+      ir_size = int(10/delay)
+      ir_list = []
+      mid = int(ir_size/2)
       try:
         while True:
           start = time.time()
@@ -142,11 +142,14 @@ def main():
             ir_list.insert(0,data)
 
             sub1 = cv2.subtract(ir_list[0],ir_list[mid])
+            
+            #print(round(np.max(sub1),2))
             #sub1 = np.where(sub1>1,sub1,0)
-            _,sub1 = cv2.threshold(sub1,3,255,cv2.THRESH_BINARY)
+            _,sub1 = cv2.threshold(sub1,0.5,255,cv2.THRESH_BINARY)
             sub2 = cv2.subtract(ir_list[mid],ir_list[-1])
+           
             #sub2 = np.where(sub2>5,sub2,0)
-            _,sub2 = cv2.threshold(sub2,3,255,cv2.THRESH_BINARY)
+            _,sub2 = cv2.threshold(sub2,0.5,255,cv2.THRESH_BINARY)
 
             sub3 = cv2.bitwise_and(sub1,sub2)
             count = np.count_nonzero(sub3)
@@ -159,9 +162,15 @@ def main():
           # img = raw_to_8bit(data)
           # img = cv2.applyColorMap(img, cv2.COLORMAP_INFERNO)
           # cv2.imshow("Lepton Radiometry", img)
+            cv2.namedWindow("sub1 0-2",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("sub1 0-2", width=480, height=360)
             cv2.imshow('sub1 0-2',sub1)
+            cv2.namedWindow("sub2 2-4",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("sub2 2-4", width=480, height=360)
             cv2.imshow('sub2 2-4',sub2)
-            cv2.imshow('sub3 ',sub3)
+            cv2.namedWindow("result",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("result", width=480, height=360)
+            cv2.imshow('result',sub3)
           k = cv2.waitKey(27) # 10fps
            
           if k == 27:
@@ -191,9 +200,10 @@ def main():
             print(f'Light : {round(Light,2)}')
         
           end= time.time()
-          d = delay-(end-start)
-          time.sleep(d)
-          end= time.time()
+          #if (end-start) < delay:
+          #  d = delay-(end-start)
+          #  time.sleep(d)
+          #end= time.time()
           print(f'1 cycle time : {round(end-start,2)}s')
         cv2.destroyAllWindows()
       finally:
